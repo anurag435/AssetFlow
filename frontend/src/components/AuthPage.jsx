@@ -65,14 +65,14 @@ export default function AuthPage({ onLogin, onSignup }) {
     try {
       if (isSignup) {
         const { data } = await axios.post(
-          `${BASE_URL}/signup`,
+          `${BASE_URL}/api/auth/signup`,
           { name: form.name, email: form.email, department: form.department, password: form.password },
           { withCredentials: true }
         );
         await onSignup?.(data);
       } else {
         const { data } = await axios.post(
-          `${BASE_URL}/login`,
+          `${BASE_URL}/api/auth/login`,
           { email: form.email, password: form.password, remember: form.remember },
           { withCredentials: true }
         );

@@ -18,8 +18,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 const authRouter = require('./routes/auth');
+const departmentRoutes = require('./routes/departmentRoutes');
 
-app.use("/",authRouter)
+app.use("/api/auth",authRouter)
+app.use('/api/departments', departmentRoutes);
 
 connectDB()
     .then(()=>{
