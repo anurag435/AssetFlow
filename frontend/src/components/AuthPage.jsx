@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CircleCheck, Building2, ChevronDown, AlertCircle } from "lucide-react";
 import { BASE_URL } from "../utils/constant";
@@ -13,9 +13,7 @@ const lifecycle = [
   { label: "Retired", color: "#F0555F" },
 ];
 
-const departments = ["Engineering", "Facilities", "Field Ops", "IT", "HR", "Finance"];
-
-const emptyForm = { name: "", email: "", department: "", password: "", confirm: "", remember: false };
+const emptyForm = { name: "", email: "", department: "", password: "", confirm: "" };
 
 export default function AuthPage({ onLogin, onSignup }) {
   const [mode, setMode] = useState("login");
@@ -25,9 +23,32 @@ export default function AuthPage({ onLogin, onSignup }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [departments, setDepartments] = useState([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(true);
   const navigate = useNavigate();
 
   const isSignup = mode === "signup";
+
+  // Departments are created by an Admin (Org Setup screen), so we fetch the real
+  // list instead of hardcoding names — this endpoint is public since signup
+  // happens before the user has a token/session.
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchDepartments() {
+      try {
+        const { data } = await axios.get(`${BASE_URL}/api/departments`);
+        if (!cancelled) setDepartments(data.filter((d) => d.status === "Active"));
+      } catch (err) {
+        // Non-fatal — if this fails, the dropdown just stays empty and the user
+        // can still sign up without picking a department.
+        console.error("Failed to load departments:", err);
+      } finally {
+        if (!cancelled) setDepartmentsLoading(false);
+      }
+    }
+    fetchDepartments();
+    return () => { cancelled = true; };
+  }, []);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -43,7 +64,7 @@ export default function AuthPage({ onLogin, onSignup }) {
     }
 
     if (isSignup && !form.name.trim()) errs.name = "Enter your full name.";
-    if (isSignup && !form.department) errs.department = "Select your department.";
+    // Department is optional at signup (backend allows null) — admin can assign it later.
 
     if (!form.password) {
       errs.password = "Enter your password.";
@@ -67,21 +88,29 @@ export default function AuthPage({ onLogin, onSignup }) {
       if (isSignup) {
         const { data } = await axios.post(
           `${BASE_URL}/api/auth/signup`,
-          { name: form.name, email: form.email, department: form.department, password: form.password },
+          {
+            name: form.name,
+            email: form.email,
+            department: form.department || undefined, // backend expects a Department _id or nothing
+            password: form.password,
+          },
           { withCredentials: true }
         );
         await onSignup?.(data);
       } else {
         const { data } = await axios.post(
           `${BASE_URL}/api/auth/login`,
-          { email: form.email, password: form.password, remember: form.remember },
+          { email: form.email, password: form.password },
           { withCredentials: true }
         );
         await onLogin?.(data);
       }
-      navigate("/dashboard")
+      navigate("/dashboard");
     } catch (err) {
-
+      const message =
+        err.response?.data?.message ||
+        "Something went wrong. Please check your details and try again.";
+      setServerError(message);
       console.error(err);
     } finally {
       setLoading(false);
@@ -106,7 +135,7 @@ export default function AuthPage({ onLogin, onSignup }) {
       <BrandPanel />
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-95 fade-up">
+        <div className="w-full max-w-md fade-up">
           <div className="lg:hidden flex items-center gap-2 mb-10 justify-center">
             <LogoMark size="sm" />
             <span className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-base">AssetFlow</span>
@@ -172,12 +201,13 @@ export default function AuthPage({ onLogin, onSignup }) {
             {isSignup && (
               <SelectField
                 icon={<Building2 size={16} />}
-                label="Department"
+                label="Department (optional)"
                 value={form.department}
                 onChange={(e) => updateField("department", e.target.value)}
                 error={errors.department}
-                options={departments}
-                placeholder="Select your department"
+                options={departments.map((d) => ({ value: d._id, label: d.name }))}
+                placeholder={departmentsLoading ? "Loading departments..." : "Select your department"}
+                disabled={departmentsLoading}
               />
             )}
 
@@ -215,16 +245,24 @@ export default function AuthPage({ onLogin, onSignup }) {
 
             {!isSignup ? (
               <div className="flex items-center justify-between text-sm pt-1">
-                <label className="flex items-center gap-2 text-[#8C99A6] cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={form.remember}
-                    onChange={(e) => updateField("remember", e.target.checked)}
-                    className="w-3.5 h-3.5 rounded-sm accent-[#29D8AA]"
-                  />
-                  Remember me
-                </label>
-                <button type="button" className="text-[#4C9FFE] hover:underline" onClick={() => onLogin?.({ forgot: true, email: form.email })}>
+                <span />
+                <button
+                  type="button"
+                  className="text-[#4C9FFE] hover:underline"
+                  onClick={async () => {
+                    if (!form.email.trim()) {
+                      setErrors({ email: "Enter your email first." });
+                      return;
+                    }
+                    try {
+                      await axios.post(`${BASE_URL}/api/auth/forgot-password`, { email: form.email });
+                      setServerError(""); // clear any prior error
+                      alert("If that email exists, a reset link has been sent.");
+                    } catch (err) {
+                      setServerError("Couldn't send reset email right now. Try again shortly.");
+                    }
+                  }}
+                >
                   Forgot password
                 </button>
               </div>
@@ -351,26 +389,27 @@ function Field({ icon, label, error, trailing, ...inputProps }) {
   );
 }
 
-function SelectField({ icon, label, error, options, placeholder, ...selectProps }) {
+function SelectField({ icon, label, error, options, placeholder, disabled, ...selectProps }) {
   return (
     <label className="block">
       <span className="text-xs text-[#8C99A6] mb-1.5 block">{label}</span>
       <div
         className={`flex items-center gap-2.5 h-11 px-3 rounded-lg bg-[#10161D] border transition-colors ${error ? "border-[#F0555F]/60" : "border-[#232C36] focus-within:border-[#29D8AA]/50"
-          }`}
+          } ${disabled ? "opacity-60" : ""}`}
       >
         <span className="text-[#8C99A6]">{icon}</span>
         <select
           {...selectProps}
+          disabled={disabled}
           className={`flex-1 bg-transparent outline-none text-sm appearance-none ${selectProps.value ? "text-[#ECF1F5]" : "text-[#4A5460]"
             }`}
         >
-          <option value="" disabled className="bg-[#10161D] text-[#4A5460]">
+          <option value="" className="bg-[#10161D] text-[#4A5460]">
             {placeholder}
           </option>
           {options.map((opt) => (
-            <option key={opt} value={opt} className="bg-[#10161D] text-[#ECF1F5]">
-              {opt}
+            <option key={opt.value} value={opt.value} className="bg-[#10161D] text-[#ECF1F5]">
+              {opt.label}
             </option>
           ))}
         </select>

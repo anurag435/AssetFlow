@@ -57,7 +57,7 @@ export default function DashPage({ userName = "Priya", onNavigate, onLogout }) {
           </div>
 
           <div
-            className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/[0.06] px-4 py-2.5 fade-up transition-colors hover:bg-[#F0555F]/[0.1] cursor-default"
+            className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5 fade-up transition-colors hover:bg-[#F0555F]/10 cursor-default"
             style={{ animationDelay: "260ms" }}
           >
             <span className="text-sm text-[#F0555F]">
@@ -101,7 +101,7 @@ export default function DashPage({ userName = "Priya", onNavigate, onLogout }) {
 
 function Sidebar({ active, onSelect }) {
   return (
-    <aside className="w-[220px] shrink-0 border-r border-[#232C36] p-6">
+    <aside className="w-55 shrink-0 border-r border-[#232C36] p-6">
       <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-bold text-lg mb-6">AssetFlow</h2>
 
       <nav className="space-y-1">
@@ -113,7 +113,7 @@ function Sidebar({ active, onSelect }) {
               onClick={() => onSelect(item)}
               className={`w-full text-left px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${
                 isActive
-                  ? "border border-[#29D8AA]/50 text-[#29D8AA] bg-[#29D8AA]/[0.06]"
+                  ? "border border-[#29D8AA]/50 text-[#29D8AA] bg-[#29D8AA]/6"
                   : "text-[#8C99A6] hover:text-[#ECF1F5] hover:bg-[#10161D]"
               }`}
             >
@@ -165,7 +165,7 @@ function ProfileMenu({ userName, onLogout }) {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-[#F0555F] hover:bg-[#F0555F]/[0.08] transition-colors"
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-[#F0555F] hover:bg-[#F0555F]/8 transition-colors"
           >
             <LogOut size={14} />
             Log out
@@ -194,7 +194,7 @@ function ActionButton({ label, primary, onClick }) {
       onClick={onClick}
       className={`h-9 px-4 rounded-md text-sm transition-all active:scale-[0.97] border ${
         primary
-          ? "border-[#29D8AA]/60 text-[#29D8AA] hover:bg-[#29D8AA]/[0.08]"
+          ? "border-[#29D8AA]/60 text-[#29D8AA] hover:bg-[#29D8AA]/8"
           : "border-[#3A4551] text-[#ECF1F5] hover:bg-[#171F27]"
       }`}
     >

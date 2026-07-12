@@ -8,7 +8,7 @@ const {
 } = require('../controllers/departmentController');
 const { protect, requireRole } = require('../middlewares/auth');
 
-departmentRoutes.get('/', protect, listDepartments);
+departmentRoutes.get('/', listDepartments);
 departmentRoutes.post('/', protect, requireRole('admin'), createDepartment);
 departmentRoutes.put('/:id', protect, requireRole('admin'), updateDepartment);
 departmentRoutes.patch('/:id/deactivate', protect, requireRole('admin'), deactivateDepartment);
