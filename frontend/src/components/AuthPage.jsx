@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CircleCheck, Building2, ChevronDown, AlertCircle } from "lucide-react";
 import { BASE_URL } from "../utils/constant";
+import { useNavigate } from 'react-router-dom'
 
 
 const lifecycle = [
@@ -24,6 +25,7 @@ export default function AuthPage({ onLogin, onSignup }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
 
   const isSignup = mode === "signup";
 
@@ -77,8 +79,9 @@ export default function AuthPage({ onLogin, onSignup }) {
         );
         await onLogin?.(data);
       }
+      navigate("/dashboard")
     } catch (err) {
-    
+
       console.error(err);
     } finally {
       setLoading(false);
@@ -122,18 +125,16 @@ export default function AuthPage({ onLogin, onSignup }) {
             <button
               type="button"
               onClick={() => switchMode("login")}
-              className={`py-2 text-sm rounded-md transition-colors ${
-                !isSignup ? "bg-[#171F27] text-[#ECF1F5] font-medium" : "text-[#8C99A6] hover:text-[#ECF1F5]"
-              }`}
+              className={`py-2 text-sm rounded-md transition-colors ${!isSignup ? "bg-[#171F27] text-[#ECF1F5] font-medium" : "text-[#8C99A6] hover:text-[#ECF1F5]"
+                }`}
             >
               Sign in
             </button>
             <button
               type="button"
               onClick={() => switchMode("signup")}
-              className={`py-2 text-sm rounded-md transition-colors ${
-                isSignup ? "bg-[#171F27] text-[#ECF1F5] font-medium" : "text-[#8C99A6] hover:text-[#ECF1F5]"
-              }`}
+              className={`py-2 text-sm rounded-md transition-colors ${isSignup ? "bg-[#171F27] text-[#ECF1F5] font-medium" : "text-[#8C99A6] hover:text-[#ECF1F5]"
+                }`}
             >
               Create account
             </button>
@@ -338,9 +339,8 @@ function Field({ icon, label, error, trailing, ...inputProps }) {
     <label className="block">
       <span className="text-xs text-[#8C99A6] mb-1.5 block">{label}</span>
       <div
-        className={`flex items-center gap-2.5 h-11 px-3 rounded-lg bg-[#10161D] border transition-colors ${
-          error ? "border-[#F0555F]/60" : "border-[#232C36] focus-within:border-[#29D8AA]/50"
-        }`}
+        className={`flex items-center gap-2.5 h-11 px-3 rounded-lg bg-[#10161D] border transition-colors ${error ? "border-[#F0555F]/60" : "border-[#232C36] focus-within:border-[#29D8AA]/50"
+          }`}
       >
         <span className="text-[#8C99A6]">{icon}</span>
         <input {...inputProps} className="flex-1 bg-transparent outline-none text-[#ECF1F5] text-sm placeholder:text-[#4A5460]" />
@@ -356,16 +356,14 @@ function SelectField({ icon, label, error, options, placeholder, ...selectProps 
     <label className="block">
       <span className="text-xs text-[#8C99A6] mb-1.5 block">{label}</span>
       <div
-        className={`flex items-center gap-2.5 h-11 px-3 rounded-lg bg-[#10161D] border transition-colors ${
-          error ? "border-[#F0555F]/60" : "border-[#232C36] focus-within:border-[#29D8AA]/50"
-        }`}
+        className={`flex items-center gap-2.5 h-11 px-3 rounded-lg bg-[#10161D] border transition-colors ${error ? "border-[#F0555F]/60" : "border-[#232C36] focus-within:border-[#29D8AA]/50"
+          }`}
       >
         <span className="text-[#8C99A6]">{icon}</span>
         <select
           {...selectProps}
-          className={`flex-1 bg-transparent outline-none text-sm appearance-none ${
-            selectProps.value ? "text-[#ECF1F5]" : "text-[#4A5460]"
-          }`}
+          className={`flex-1 bg-transparent outline-none text-sm appearance-none ${selectProps.value ? "text-[#ECF1F5]" : "text-[#4A5460]"
+            }`}
         >
           <option value="" disabled className="bg-[#10161D] text-[#4A5460]">
             {placeholder}

@@ -40,7 +40,7 @@ export default function DashPage({ userName = "Priya", onNavigate }) {
 
   return (
     <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full max-w-[1040px] rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar active={activeNav} onSelect={goTo} />
 
         <div className="flex-1 min-w-0 p-8">
