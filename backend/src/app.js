@@ -23,6 +23,7 @@ const categoryRouter = require('./routes/categoryRoutes');
 const assetRouter = require('./routes/assetRoutes');
 const transferRouter = require('./routes/transferRoutes');
 const allocationRouter = require('./routes/allocationRoutes');
+const bookingRouter = require('./routes/bookingRoutes');
 
 app.use("/api/auth",authRouter)
 app.use('/api/departments', departmentRoutes);
@@ -30,6 +31,7 @@ app.use('/api/categories', categoryRouter);
 app.use('/api/assets', assetRouter);
 app.use('/api/allocations', allocationRouter);
 app.use('/api/transfers', transferRouter);
+app.use('/api/bookings', bookingRouter);
 
 connectDB()
     .then(()=>{
