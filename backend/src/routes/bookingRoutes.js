@@ -6,7 +6,7 @@ const {
   cancelBooking,
   rescheduleBooking,
 } = require('../controllers/bookingController');
-const { protect } = require('../middleware/auth');
+const { protect } = require('../middlewares/auth');
 
 bookingRouter.get('/', protect, listBookings);
 bookingRouter.post('/', protect, createBooking); // any logged-in user can book a shared resource
