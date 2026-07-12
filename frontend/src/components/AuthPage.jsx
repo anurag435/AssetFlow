@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CircleCheck, Building2, ChevronDown } from "lucide-react";
+import axios from "axios";
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CircleCheck, Building2, ChevronDown, AlertCircle } from "lucide-react";
+import { BASE_URL } from "../utils/constant";
 
 
 const lifecycle = [
@@ -18,6 +20,7 @@ export default function AuthPage({ onLogin, onSignup }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -54,22 +57,28 @@ export default function AuthPage({ onLogin, onSignup }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setServerError("");
     if (!validate()) return;
 
     setLoading(true);
     try {
       if (isSignup) {
-        await onSignup?.({
-          name: form.name,
-          email: form.email,
-          department: form.department,
-          password: form.password,
-        });
+        const { data } = await axios.post(
+          `${BASE_URL}/api/auth/signup`,
+          { name: form.name, email: form.email, department: form.department, password: form.password },
+          { withCredentials: true }
+        );
+        await onSignup?.(data);
       } else {
-        await onLogin?.({ email: form.email, password: form.password, remember: form.remember });
+        const { data } = await axios.post(
+          `${BASE_URL}/api/auth/login`,
+          { email: form.email, password: form.password, remember: form.remember },
+          { withCredentials: true }
+        );
+        await onLogin?.(data);
       }
     } catch (err) {
-      
+    
       console.error(err);
     } finally {
       setLoading(false);
@@ -79,6 +88,7 @@ export default function AuthPage({ onLogin, onSignup }) {
   function switchMode(next) {
     setMode(next);
     setErrors({});
+    setServerError("");
   }
 
   return (
@@ -93,7 +103,7 @@ export default function AuthPage({ onLogin, onSignup }) {
       <BrandPanel />
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[380px] fade-up">
+        <div className="w-full max-w-95 fade-up">
           <div className="lg:hidden flex items-center gap-2 mb-10 justify-center">
             <LogoMark size="sm" />
             <span className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-base">AssetFlow</span>
@@ -130,6 +140,13 @@ export default function AuthPage({ onLogin, onSignup }) {
           </div>
 
           <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
+            {serverError && (
+              <div className="flex items-start gap-2.5 rounded-lg bg-[#F0555F]/8 border border-[#F0555F]/30 px-3 py-2.5">
+                <AlertCircle size={16} className="text-[#F0555F] mt-0.5 shrink-0" />
+                <p className="text-xs text-[#F0555F] leading-relaxed">{serverError}</p>
+              </div>
+            )}
+
             {isSignup && (
               <Field
                 icon={<User size={16} />}
@@ -211,7 +228,7 @@ export default function AuthPage({ onLogin, onSignup }) {
                 </button>
               </div>
             ) : (
-              <div className="flex items-start gap-2.5 rounded-lg bg-[#29D8AA]/[0.06] border border-[#29D8AA]/25 px-3 py-2.5">
+              <div className="flex items-start gap-2.5 rounded-lg bg-[#29D8AA]/6 border border-[#29D8AA]/25 px-3 py-2.5">
                 <CircleCheck size={16} className="text-[#29D8AA] mt-0.5 shrink-0" />
                 <p className="text-xs text-[#9FE1CB] leading-relaxed">
                   This creates an <span className="font-medium">employee</span> account only — Department Head and Asset Manager roles are set later by an admin.
