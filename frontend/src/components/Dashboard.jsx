@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { LogOut, ChevronDown } from "lucide-react";
 
 const navItems = [
   "Dashboard",
@@ -30,7 +31,7 @@ const recentActivity = [
 
 const overdueCount = 3;
 
-export default function DashPage({ userName = "Priya", onNavigate }) {
+export default function DashPage({ userName = "Priya", onNavigate, onLogout }) {
   const [activeNav, setActiveNav] = useState("Dashboard");
 
   function goTo(item) {
@@ -46,12 +47,7 @@ export default function DashPage({ userName = "Priya", onNavigate }) {
         <div className="flex-1 min-w-0 p-8">
           <div className="flex items-center justify-between">
             <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Today's Overview</h1>
-            <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#232C36] transition-colors hover:border-[#4C9FFE]/50 hover:bg-[#10161D]">
-              <span className="w-6 h-6 rounded-full bg-[#171F27] border border-[#232C36] flex items-center justify-center text-[11px] text-[#ECF1F5] font-medium">
-                {userName.charAt(0)}
-              </span>
-              <span className="text-xs text-[#8C99A6]">{userName}</span>
-            </button>
+            <ProfileMenu userName={userName} onLogout={onLogout} />
           </div>
 
           <div className="grid grid-cols-3 gap-3.5 mt-5">
@@ -96,6 +92,8 @@ export default function DashPage({ userName = "Priya", onNavigate }) {
         .fade-in { animation: fadeIn .4s ease both; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp .4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+        @keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .menu-in { animation: menuIn .15s ease both; transform-origin: top right; }
       `}</style>
     </div>
   );
@@ -125,6 +123,56 @@ function Sidebar({ active, onSelect }) {
         })}
       </nav>
     </aside>
+  );
+}
+
+
+function ProfileMenu({ userName, onLogout }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function handleLogout() {
+    setOpen(false);
+    onLogout?.();
+  }
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#232C36] transition-colors hover:border-[#4C9FFE]/50 hover:bg-[#10161D]"
+      >
+        <span className="w-6 h-6 rounded-full bg-[#171F27] border border-[#232C36] flex items-center justify-center text-[11px] text-[#ECF1F5] font-medium">
+          {userName.charAt(0)}
+        </span>
+        <span className="text-xs text-[#8C99A6]">{userName}</span>
+        <ChevronDown size={13} className={`text-[#8C99A6] transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="menu-in absolute right-0 mt-2 w-44 rounded-lg border border-[#232C36] bg-[#10161D] shadow-lg shadow-black/40 overflow-hidden z-10">
+          <div className="px-3.5 py-2.5 border-b border-[#232C36]">
+            <p className="text-sm text-[#ECF1F5] font-medium truncate">{userName}</p>
+            <p className="text-xs text-[#8C99A6] mt-0.5">Employee</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-[#F0555F] hover:bg-[#F0555F]/[0.08] transition-colors"
+          >
+            <LogOut size={14} />
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
