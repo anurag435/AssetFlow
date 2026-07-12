@@ -20,10 +20,12 @@ app.use(cookieParser());
 const authRouter = require('./routes/auth');
 const departmentRoutes = require('./routes/departmentRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
+const assetRouter = require('./routes/assetRoutes');
 
 app.use("/api/auth",authRouter)
 app.use('/api/departments', departmentRoutes);
 app.use('/api/categories', categoryRouter);
+app.use('/api/assets', assetRouter);
 
 connectDB()
     .then(()=>{
