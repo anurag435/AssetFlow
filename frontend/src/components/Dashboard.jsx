@@ -1,89 +1,133 @@
 import { useState, useRef, useEffect } from "react";
-import { LogOut, ChevronDown } from "lucide-react";
+import { LogOut, ChevronDown, Loader2 } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../utils/constant";
+import Sidebar from "../components/Sidebar";
 
-const navItems = [
-  "Dashboard",
-  "Organization setup",
-  "Assets",
-  "Allocation & Transfer",
-  "Resource Booking",
-  "Maintenance",
-  "Audit",
-  "Reports",
-  "Notifications",
-];
+export default function DashPage() {
+  const navigate = useNavigate();
 
+  const [user, setUser] = useState(null);
+  const [kpis, setKpis] = useState([]);
+  const [overdueCount, setOverdueCount] = useState(0);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-const kpis = [
-  { label: "Available", value: 128 },
-  { label: "Allocated", value: 76 },
-  { label: "Maintenance today", value: 4 },
-  { label: "Active bookings", value: 9 },
-  { label: "Pending transfers", value: 3 },
-  { label: "Upcoming returns", value: 12 },
-];
+  useEffect(() => {
+    let cancelled = false;
 
-const recentActivity = [
-  "Laptop AF-0114 - allocated to Priya shah - IT dept",
-  "Room B2 - booking confirmed - 2:00 to 3:00 PM",
-  "Projector AF-0062 - maintenance resolved",
-];
+    async function loadDashboard() {
+      setLoading(true);
+      setError("");
+      try {
+        const [meRes, summaryRes] = await Promise.all([
+          axios.get(`${BASE_URL}/api/auth/me`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/api/dashboard`, { withCredentials: true }),
+        ]);
 
-const overdueCount = 3;
+        if (cancelled) return;
+        setUser(meRes.data.user);
+        setKpis(summaryRes.data.kpis);
+        setOverdueCount(summaryRes.data.overdueReturns);
+        setRecentActivity(summaryRes.data.recentActivity);
+      } catch (err) {
+        if (cancelled) return;
+        // Session expired or invalid — bounce back to login
+        if (err.response?.status === 401) {
+          navigate("/");
+          return;
+        }
+        setError("Couldn't load dashboard data. Refresh to try again.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
 
-export default function DashPage({ userName = "Priya", onNavigate, onLogout }) {
-  const [activeNav, setActiveNav] = useState("Dashboard");
+    loadDashboard();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
-  function goTo(item) {
-    setActiveNav(item);
-    onNavigate?.(item);
+  function goTo(path) {
+    navigate(path);
+  }
+
+  async function handleLogout() {
+    try {
+      await axios.post(`${BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      navigate("/");
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
       <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
-        <Sidebar active={activeNav} onSelect={goTo} />
+        <Sidebar />
 
         <div className="flex-1 min-w-0 p-8">
           <div className="flex items-center justify-between">
             <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Today's Overview</h1>
-            <ProfileMenu userName={userName} onLogout={onLogout} />
+            <ProfileMenu userName={user?.name || "..."} role={user?.role} onLogout={handleLogout} />
           </div>
 
-          <div className="grid grid-cols-3 gap-3.5 mt-5">
-            {kpis.map((kpi, i) => (
-              <KpiCard key={kpi.label} label={kpi.label} value={kpi.value} delay={i * 40} />
-            ))}
-          </div>
-
-          <div
-            className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5 fade-up transition-colors hover:bg-[#F0555F]/10 cursor-default"
-            style={{ animationDelay: "260ms" }}
-          >
-            <span className="text-sm text-[#F0555F]">
-              {overdueCount} assets overdue for return - flagged for follow-up
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 mt-4 fade-up" style={{ animationDelay: "310ms" }}>
-            <ActionButton label="+ register asset" primary onClick={() => goTo("Assets")} />
-            <ActionButton label="Book resource" onClick={() => goTo("Resource Booking")} />
-            <ActionButton label="Raise requests" onClick={() => goTo("Maintenance")} />
-          </div>
-
-          <section className="mt-7 fade-up" style={{ animationDelay: "360ms" }}>
-            <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg">Recent Acivity</h2>
-            <div className="mt-2.5 space-y-1">
-              {recentActivity.map((line, i) => (
-                <p
-                  key={i}
-                  className="text-sm text-[#8C99A6] leading-relaxed px-2 py-1 -mx-2 rounded-md transition-colors hover:bg-[#10161D] hover:text-[#C7D0D9] cursor-default"
-                >
-                  {line}
-                </p>
-              ))}
+          {error && (
+            <div className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5">
+              <span className="text-sm text-[#F0555F]">{error}</span>
             </div>
-          </section>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 text-[#8C99A6] text-sm py-20">
+              <Loader2 size={16} className="animate-spin" /> Loading dashboard...
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3.5 mt-5">
+                {kpis.map((kpi, i) => (
+                  <KpiCard key={kpi.label} label={kpi.label} value={kpi.value} delay={i * 40} />
+                ))}
+              </div>
+
+              {overdueCount > 0 && (
+                <div
+                  className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5 fade-up transition-colors hover:bg-[#F0555F]/10 cursor-default"
+                  style={{ animationDelay: "260ms" }}
+                >
+                  <span className="text-sm text-[#F0555F]">
+                    {overdueCount} asset{overdueCount === 1 ? "" : "s"} overdue for return — flagged for follow-up
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mt-4 fade-up" style={{ animationDelay: "310ms" }}>
+                <ActionButton label="+ register asset" primary onClick={() => goTo("/assets")} />
+                <ActionButton label="Book resource" onClick={() => goTo("/resource-booking")} />
+                <ActionButton label="Raise requests" onClick={() => goTo("/maintenance")} />
+              </div>
+
+              <section className="mt-7 fade-up" style={{ animationDelay: "360ms" }}>
+                <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg">Recent Activity</h2>
+                <div className="mt-2.5 space-y-1">
+                  {recentActivity.length === 0 ? (
+                    <p className="text-sm text-[#8C99A6] px-2 py-1 -mx-2">No recent activity yet.</p>
+                  ) : (
+                    recentActivity.map((line, i) => (
+                      <p
+                        key={i}
+                        className="text-sm text-[#8C99A6] leading-relaxed px-2 py-1 -mx-2 rounded-md transition-colors hover:bg-[#10161D] hover:text-[#C7D0D9] cursor-default"
+                      >
+                        {line}
+                      </p>
+                    ))
+                  )}
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </div>
 
@@ -99,35 +143,7 @@ export default function DashPage({ userName = "Priya", onNavigate, onLogout }) {
   );
 }
 
-function Sidebar({ active, onSelect }) {
-  return (
-    <aside className="w-55 shrink-0 border-r border-[#232C36] p-6">
-      <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-bold text-lg mb-6">AssetFlow</h2>
-
-      <nav className="space-y-1">
-        {navItems.map((item) => {
-          const isActive = item === active;
-          return (
-            <button
-              key={item}
-              onClick={() => onSelect(item)}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${
-                isActive
-                  ? "border border-[#29D8AA]/50 text-[#29D8AA] bg-[#29D8AA]/6"
-                  : "text-[#8C99A6] hover:text-[#ECF1F5] hover:bg-[#10161D]"
-              }`}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </nav>
-    </aside>
-  );
-}
-
-
-function ProfileMenu({ userName, onLogout }) {
+function ProfileMenu({ userName, role, onLogout }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -144,6 +160,11 @@ function ProfileMenu({ userName, onLogout }) {
     onLogout?.();
   }
 
+  // Role comes back from the API as e.g. "assetManager" — make it readable
+  const roleLabel = role
+    ? role.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase())
+    : "Employee";
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -151,7 +172,7 @@ function ProfileMenu({ userName, onLogout }) {
         className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#232C36] transition-colors hover:border-[#4C9FFE]/50 hover:bg-[#10161D]"
       >
         <span className="w-6 h-6 rounded-full bg-[#171F27] border border-[#232C36] flex items-center justify-center text-[11px] text-[#ECF1F5] font-medium">
-          {userName.charAt(0)}
+          {userName.charAt(0).toUpperCase()}
         </span>
         <span className="text-xs text-[#8C99A6]">{userName}</span>
         <ChevronDown size={13} className={`text-[#8C99A6] transition-transform ${open ? "rotate-180" : ""}`} />
@@ -161,7 +182,7 @@ function ProfileMenu({ userName, onLogout }) {
         <div className="menu-in absolute right-0 mt-2 w-44 rounded-lg border border-[#232C36] bg-[#10161D] shadow-lg shadow-black/40 overflow-hidden z-10">
           <div className="px-3.5 py-2.5 border-b border-[#232C36]">
             <p className="text-sm text-[#ECF1F5] font-medium truncate">{userName}</p>
-            <p className="text-xs text-[#8C99A6] mt-0.5">Employee</p>
+            <p className="text-xs text-[#8C99A6] mt-0.5">{roleLabel}</p>
           </div>
           <button
             onClick={handleLogout}

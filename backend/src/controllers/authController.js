@@ -87,17 +87,26 @@ exports.getMe = async (req, res) => {
   return res.json({ user: req.user });
 };
 
+exports.logout = async (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  return res.json({ message: 'Logged out successfully.' });
+};
+
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email: email?.toLowerCase() });
-
+ 
     if (user) {
       const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
       console.log(`[DEV ONLY] Password reset token for ${user.email}: ${resetToken}`);
       // TODO: email this link instead of logging it, e.g. via nodemailer
     }
-
+ 
     return res.json({ message: 'If that email exists, a reset link has been sent.' });
   } catch (err) {
     return res.status(500).json({ message: 'Request failed.', error: err.message });
