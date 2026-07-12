@@ -19,9 +19,11 @@ app.use(cookieParser());
 
 const authRouter = require('./routes/auth');
 const departmentRoutes = require('./routes/departmentRoutes');
+const categoryRouter = require('./routes/categoryRoutes');
 
 app.use("/api/auth",authRouter)
 app.use('/api/departments', departmentRoutes);
+app.use('/api/categories', categoryRouter);
 
 connectDB()
     .then(()=>{
