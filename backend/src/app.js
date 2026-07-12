@@ -21,11 +21,15 @@ const authRouter = require('./routes/auth');
 const departmentRoutes = require('./routes/departmentRoutes');
 const categoryRouter = require('./routes/categoryRoutes');
 const assetRouter = require('./routes/assetRoutes');
+const transferRouter = require('./routes/transferRoutes');
+const allocationRouter = require('./routes/allocationRoutes');
 
 app.use("/api/auth",authRouter)
 app.use('/api/departments', departmentRoutes);
 app.use('/api/categories', categoryRouter);
 app.use('/api/assets', assetRouter);
+app.use('/api/allocations', allocationRouter);
+app.use('/api/transfers', transferRouter);
 
 connectDB()
     .then(()=>{

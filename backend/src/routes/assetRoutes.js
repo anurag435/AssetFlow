@@ -8,7 +8,7 @@ const {
   updateAsset,
   retireAsset,
 } = require('../controllers/assetController');
-const { protect, requireRole } = require('../middleware/auth');
+const { protect, requireRole } = require('../middlewares/auth');
 
 assetRouter.get('/', protect, listAssets); // all logged-in roles can search/browse
 assetRouter.get('/:id', protect, getAssetById);
