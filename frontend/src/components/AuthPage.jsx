@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2, CircleCheck, Building2, ChevronDown } from "lucide-react";
 
-// asset lifecycle states from the spec — used for the left panel diagram
+
 const lifecycle = [
   { label: "Available", color: "#29D8AA" },
   { label: "Allocated", color: "#4C9FFE" },
@@ -10,8 +10,6 @@ const lifecycle = [
   { label: "Retired", color: "#F0555F" },
 ];
 
-// TODO: pull this from Screen 3 (Organization Setup) once the API is wired up,
-// instead of hardcoding it here
 const departments = ["Engineering", "Facilities", "Field Ops", "IT", "HR", "Finance"];
 
 const emptyForm = { name: "", email: "", department: "", password: "", confirm: "", remember: false };
@@ -71,7 +69,7 @@ export default function AuthPage({ onLogin, onSignup }) {
         await onLogin?.({ email: form.email, password: form.password, remember: form.remember });
       }
     } catch (err) {
-      // TODO: surface a proper toast/error banner once the API layer is wired up
+      
       console.error(err);
     } finally {
       setLoading(false);
