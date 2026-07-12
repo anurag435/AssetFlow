@@ -1,5 +1,7 @@
 import { useNavigate, useLocation } from "react-router-dom";
 
+// Single source of truth for sidebar nav + routing.
+// Every page imports THIS instead of keeping its own copy.
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Organization setup", path: "/organization-setup" },

@@ -1,98 +1,157 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { LogOut, ChevronDown, AlertTriangle, ArrowRight } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../utils/constant";
+import Sidebar from "../components/Sidebar";
 
-const navItems = [
-  "Dashboard",
-  "Organization setup",
-  "Assets",
-  "Allocation & Transfer",
-  "Resource Booking",
-  "Maintenance",
-  "Audit",
-  "Reports",
-  "Notifications",
-];
+export default function AllocationPage() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [assets, setAssets] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [history, setHistory] = useState([]);
+  const [currentAllocation, setCurrentAllocation] = useState(null);
 
-const assets = [
-  {
-    tag: "AF-0114",
-    name: "Dell laptop",
-    holder: "Priya shah",
-    department: "Engineering",
-    history: [
-      { date: "Mar 12", text: "Allocated to Priya shah - Engineering" },
-      { date: "Jan 04", text: "Returned by Arjun Nair - condition: good" },
-    ],
-  },
-  {
-    tag: "AF-0062",
-    name: "Projector",
-    holder: null,
-    department: null,
-    history: [{ date: "Feb 20", text: "Returned by Facilities - condition: fair" }],
-  },
-  {
-    tag: "AF-0201",
-    name: "Office chair",
-    holder: null,
-    department: null,
-    history: [],
-  },
-];
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-const employees = ["Arjun Nair", "Sana Iqbal", "Rohan Mehta", "Aditi Rao"];
-
-export default function AllocationPage({ userName = "Priya", onNavigate, onLogout }) {
-  const [activeNav, setActiveNav] = useState("Allocation & Transfer");
-  const [selectedTag, setSelectedTag] = useState(assets[0].tag);
-  const [toEmployee, setToEmployee] = useState("");
+  const [holderUser, setHolderUser] = useState("");
+  const [expectedReturnDate, setExpectedReturnDate] = useState("");
+  const [toDept, setToDept] = useState("");
   const [reason, setReason] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const asset = useMemo(() => assets.find((a) => a.tag === selectedTag), [selectedTag]);
-  const isTaken = Boolean(asset?.holder);
+  const asset = assets.find((a) => a._id === selectedId);
 
-  function goTo(item) {
-    setActiveNav(item);
-    onNavigate?.(item);
-  }
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const [meRes, assetsRes, usersRes, deptRes] = await Promise.all([
+          axios.get(`${BASE_URL}/api/auth/me`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/api/assets`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/api/users`, { withCredentials: true }),
+          axios.get(`${BASE_URL}/api/departments`, { withCredentials: true }),
+        ]);
+        if (cancelled) return;
+        setUser(meRes.data.user);
+        setAssets(assetsRes.data.assets);
+        setEmployees(usersRes.data);
+        setDepartments(deptRes.data);
+        if (assetsRes.data.assets.length) setSelectedId(assetsRes.data.assets[0]._id);
+      } catch (err) {
+        if (cancelled) return;
+        if (err.response?.status === 401) return navigate("/");
+        setError("Couldn't load allocation data.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [navigate]);
 
-  function handleAssetChange(tag) {
-    setSelectedTag(tag);
-    setToEmployee("");
-    setReason("");
-    setSubmitted(false);
-  }
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancelled = false;
+    async function loadDetail() {
+      setDetailLoading(true);
+      setSuccess("");
+      setHolderUser(""); setExpectedReturnDate(""); setToDept(""); setReason("");
+      try {
+        const res = await axios.get(`${BASE_URL}/api/assets/${selectedId}/history`, { withCredentials: true });
+        if (cancelled) return;
+        setHistory(res.data.allocations);
+        setCurrentAllocation(res.data.allocations.find((a) => a.status === "Active") || null);
+      } catch (err) {
+        if (!cancelled) setError("Couldn't load asset history.");
+      } finally {
+        if (!cancelled) setDetailLoading(false);
+      }
+    }
+    loadDetail();
+    return () => { cancelled = true; };
+  }, [selectedId]);
 
-  function handleSubmit(e) {
+  const isTaken = asset?.status === "Allocated";
+
+  async function handleAllocate(e) {
     e.preventDefault();
-    if (!toEmployee.trim() || !reason.trim()) return;
-    setSubmitted(true);
+    if (!holderUser) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await axios.post(
+        `${BASE_URL}/api/allocations`,
+        { assetId: selectedId, holderUser, expectedReturnDate: expectedReturnDate || undefined },
+        { withCredentials: true }
+      );
+      setSuccess("Asset allocated successfully.");
+      setAssets((prev) => prev.map((a) => (a._id === selectedId ? { ...a, status: "Allocated" } : a)));
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to allocate asset.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleTransferRequest(e) {
+    e.preventDefault();
+    if (!reason.trim()) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      await axios.post(
+        `${BASE_URL}/api/transfers`,
+        { assetId: selectedId, toHolderDepartment: toDept || undefined, reason: reason.trim() },
+        { withCredentials: true }
+      );
+      setSuccess(`Request submitted — pending approval.`);
+      setReason(""); setToDept("");
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to request transfer.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full bg-[#0A0E13] flex items-center justify-center">
+        <Loader2 size={20} className="animate-spin text-[#8C99A6]" />
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen w-full bg-[#0A0E13] font-['Inter'] flex fade-in">
-      <Sidebar active={activeNav} onSelect={goTo} />
-
+      <Sidebar />
       <div className="flex-1 min-w-0 p-8 max-w-[560px]">
         <div className="flex items-center justify-between">
           <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Allocation &amp; Transfer</h1>
-          <ProfileMenu userName={userName} onLogout={onLogout} />
+          <ProfileMenu userName={user?.name || "..."} role={user?.role} />
         </div>
 
-        <div className="mt-6 fade-up" style={{ animationDelay: "40ms" }}>
+        {error && <div className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5 text-sm text-[#F0555F]">{error}</div>}
+        {success && <div className="mt-4 rounded-lg border border-[#29D8AA]/40 bg-[#29D8AA]/6 px-4 py-2.5 text-sm text-[#29D8AA]">{success}</div>}
+
+        <div className="mt-6">
           <label className="block">
             <span className="text-xs text-[#8C99A6] mb-1.5 block">Asset</span>
             <div className="relative">
               <select
-                value={selectedTag}
-                onChange={(e) => handleAssetChange(e.target.value)}
-                className="w-full appearance-none h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50 transition-colors"
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                className="w-full appearance-none h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50"
               >
                 {assets.map((a) => (
-                  <option key={a.tag} value={a.tag} className="bg-[#10161D]">
-                    {a.tag} - {a.name}
-                  </option>
+                  <option key={a._id} value={a._id}>{a.assetTag} - {a.name}</option>
                 ))}
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8C99A6] pointer-events-none" />
@@ -100,116 +159,96 @@ export default function AllocationPage({ userName = "Priya", onNavigate, onLogou
           </label>
         </div>
 
-        {isTaken ? (
-          <div
-            className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#F0555F]/[0.1] border border-[#F0555F]/40 px-4 py-3 fade-up"
-            style={{ animationDelay: "80ms" }}
-          >
-            <AlertTriangle size={16} className="text-[#F0555F] mt-0.5 shrink-0" />
-            <p className="text-sm text-[#F5A7AC] leading-relaxed">
-              Already allocated to <span className="font-medium text-[#F0555F]">{asset.holder}</span> ({asset.department})
-              <br />
-              Direct re-allocation is blocked — submit a transfer request below.
-            </p>
-          </div>
-        ) : (
-          <div
-            className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#29D8AA]/[0.06] border border-[#29D8AA]/25 px-4 py-3 fade-up"
-            style={{ animationDelay: "80ms" }}
-          >
-            <p className="text-sm text-[#9FE1CB] leading-relaxed">
-              This asset is currently <span className="font-medium">available</span> — you can allocate it directly instead of
-              filing a transfer request.
-            </p>
-          </div>
-        )}
-
-        {isTaken && (
-          <form onSubmit={handleSubmit} className="mt-6 fade-up" style={{ animationDelay: "120ms" }}>
-            <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base">Transfer Request</h2>
-
-            <div className="grid grid-cols-2 gap-4 mt-3">
-              <label className="block">
-                <span className="text-xs text-[#8C99A6] mb-1.5 block">From</span>
-                <div className="h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] flex items-center text-sm text-[#8C99A6]">
-                  {asset.holder}
-                </div>
-              </label>
-
-              <label className="block">
-                <span className="text-xs text-[#8C99A6] mb-1.5 block">To</span>
-                <div className="relative">
-                  <select
-                    value={toEmployee}
-                    onChange={(e) => setToEmployee(e.target.value)}
-                    className={`w-full appearance-none h-11 px-3 rounded-lg bg-[#10161D] border text-sm outline-none transition-colors ${
-                      toEmployee ? "text-[#ECF1F5] border-[#232C36] focus:border-[#29D8AA]/50" : "text-[#4A5460] border-[#232C36] focus:border-[#29D8AA]/50"
-                    }`}
-                  >
-                    <option value="" disabled className="text-[#4A5460]">
-                      Select Employee....
-                    </option>
-                    {employees
-                      .filter((e) => e !== asset.holder)
-                      .map((e) => (
-                        <option key={e} value={e} className="bg-[#10161D] text-[#ECF1F5]">
-                          {e}
-                        </option>
-                      ))}
-                  </select>
-                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8C99A6] pointer-events-none" />
-                </div>
-              </label>
-            </div>
-
-            <label className="block mt-4">
-              <span className="text-xs text-[#8C99A6] mb-1.5 block">Reason</span>
-              <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={4}
-                placeholder="Why is this transfer needed?"
-                className="w-full px-3 py-2.5 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50 transition-colors placeholder:text-[#4A5460] resize-none"
-              />
-            </label>
-
-            {submitted && (
-              <p className="text-xs text-[#29D8AA] mt-2">
-                Request submitted — pending approval from {asset.department}'s Department Head.
-              </p>
+        {detailLoading ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-[#8C99A6]"><Loader2 size={14} className="animate-spin" /> Loading asset...</div>
+        ) : asset && (
+          <>
+            {isTaken ? (
+              <div className="mt-4 flex items-start gap-2.5 rounded-lg bg-[#F0555F]/10 border border-[#F0555F]/40 px-4 py-3">
+                <AlertTriangle size={16} className="text-[#F0555F] mt-0.5 shrink-0" />
+                <p className="text-sm text-[#F5A7AC] leading-relaxed">
+                  Already allocated to <span className="font-medium text-[#F0555F]">{currentAllocation?.holderUser?.name || currentAllocation?.holderDepartment?.name || "someone"}</span>
+                  <br />Direct re-allocation is blocked — submit a transfer request below.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-4 rounded-lg bg-[#29D8AA]/6 border border-[#29D8AA]/25 px-4 py-3">
+                <p className="text-sm text-[#9FE1CB]">This asset is currently <span className="font-medium">{asset.status}</span> — allocate it directly below.</p>
+              </div>
             )}
 
-            <button
-              type="submit"
-              className="mt-4 h-10 px-5 rounded-lg bg-[#29D8AA] hover:bg-[#25c299] text-[#04342C] font-medium text-sm flex items-center gap-2 transition-all active:scale-[0.98]"
-            >
-              Submit Request
-              <ArrowRight size={15} />
-            </button>
-          </form>
+            {!isTaken && asset.status === "Available" && (
+              <form onSubmit={handleAllocate} className="mt-6">
+                <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base">Allocate this asset</h2>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <label className="block">
+                    <span className="text-xs text-[#8C99A6] mb-1.5 block">Assign to</span>
+                    <select value={holderUser} onChange={(e) => setHolderUser(e.target.value)} className="w-full h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50">
+                      <option value="">Select employee...</option>
+                      {employees.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-[#8C99A6] mb-1.5 block">Expected return</span>
+                    <input type="date" value={expectedReturnDate} onChange={(e) => setExpectedReturnDate(e.target.value)} className="w-full h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50" />
+                  </label>
+                </div>
+                <button type="submit" disabled={submitting || !holderUser} className="mt-4 h-10 px-5 rounded-lg bg-[#29D8AA] hover:bg-[#25c299] disabled:opacity-40 text-[#04342C] font-medium text-sm flex items-center gap-2 transition-all active:scale-[0.98]">
+                  {submitting && <Loader2 size={14} className="animate-spin" />} Allocate <ArrowRight size={15} />
+                </button>
+              </form>
+            )}
+
+            {isTaken && (
+              <form onSubmit={handleTransferRequest} className="mt-6">
+                <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base">Transfer Request</h2>
+                <p className="text-xs text-[#8C99A6] mt-1">Requested by you ({user?.name}) — approval routes to the receiving department's head.</p>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <label className="block">
+                    <span className="text-xs text-[#8C99A6] mb-1.5 block">Currently held by</span>
+                    <div className="h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] flex items-center text-sm text-[#8C99A6]">
+                      {currentAllocation?.holderUser?.name || currentAllocation?.holderDepartment?.name || "--"}
+                    </div>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-[#8C99A6] mb-1.5 block">To department</span>
+                    <select value={toDept} onChange={(e) => setToDept(e.target.value)} className="w-full h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50">
+                      <option value="">-- select --</option>
+                      {departments.map((d) => <option key={d._id} value={d._id}>{d.name}</option>)}
+                    </select>
+                  </label>
+                </div>
+                <label className="block mt-4">
+                  <span className="text-xs text-[#8C99A6] mb-1.5 block">Reason</span>
+                  <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={4} placeholder="Why is this transfer needed?" className="w-full px-3 py-2.5 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50 resize-none placeholder:text-[#4A5460]" />
+                </label>
+                <button type="submit" disabled={submitting || !reason.trim()} className="mt-4 h-10 px-5 rounded-lg bg-[#29D8AA] hover:bg-[#25c299] disabled:opacity-40 text-[#04342C] font-medium text-sm flex items-center gap-2 transition-all active:scale-[0.98]">
+                  {submitting && <Loader2 size={14} className="animate-spin" />} Submit Request <ArrowRight size={15} />
+                </button>
+              </form>
+            )}
+
+            <section className="mt-8">
+              <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base pb-2.5 border-b border-[#232C36]">Allocation history</h2>
+              <div className="mt-2.5 space-y-1.5">
+                {history.length === 0 && <p className="text-sm text-[#8C99A6]">No history yet for this asset.</p>}
+                {history.map((h) => (
+                  <p key={h._id} className="text-sm text-[#8C99A6] leading-relaxed">
+                    <span className="font-['JetBrains_Mono'] text-xs text-[#5A6570] mr-2">
+                      {new Date(h.allocatedDate).toLocaleDateString()}
+                    </span>
+                    {h.status === "Active" ? "Allocated to" : "Was held by"} {h.holderUser?.name || h.holderDepartment?.name || "unknown"}
+                    {h.status === "Returned" && ` — returned ${new Date(h.actualReturnDate).toLocaleDateString()}`}
+                  </p>
+                ))}
+              </div>
+            </section>
+          </>
         )}
-
-        <section className="mt-8 fade-up" style={{ animationDelay: "160ms" }}>
-          <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base pb-2.5 border-b border-[#232C36]">
-            Allocation history
-          </h2>
-          <div className="mt-2.5 space-y-1.5">
-            {asset.history.length === 0 && <p className="text-sm text-[#8C99A6]">No history yet for this asset.</p>}
-            {asset.history.map((h, i) => (
-              <p key={i} className="text-sm text-[#8C99A6] leading-relaxed">
-                <span className="font-['JetBrains_Mono'] text-xs text-[#5A6570] mr-2">{h.date}</span>
-                {h.text}
-              </p>
-            ))}
-          </div>
-        </section>
       </div>
-
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn .4s ease both; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-up { animation: fadeUp .4s cubic-bezier(0.16, 1, 0.3, 1) both; }
         @keyframes menuIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .menu-in { animation: menuIn .15s ease both; transform-origin: top right; }
       `}</style>
@@ -217,76 +256,34 @@ export default function AllocationPage({ userName = "Priya", onNavigate, onLogou
   );
 }
 
-function Sidebar({ active, onSelect }) {
-  return (
-    <aside className="w-[220px] shrink-0 border-r border-[#232C36] p-6 min-h-screen">
-      <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-bold text-lg mb-6">AssetFlow</h2>
-
-      <nav className="space-y-1">
-        {navItems.map((item) => {
-          const isActive = item === active;
-          return (
-            <button
-              key={item}
-              onClick={() => onSelect(item)}
-              className={`w-full text-left px-2.5 py-1.5 rounded-md text-[13px] transition-colors ${
-                isActive
-                  ? "border border-[#29D8AA]/50 text-[#29D8AA] bg-[#29D8AA]/[0.06]"
-                  : "text-[#8C99A6] hover:text-[#ECF1F5] hover:bg-[#10161D]"
-              }`}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </nav>
-    </aside>
-  );
-}
-
-function ProfileMenu({ userName, onLogout }) {
+function ProfileMenu({ userName, role }) {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
-
+  const ref = useRef(null);
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    function onClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
-
-  function handleLogout() {
+  async function logout() {
     setOpen(false);
-    onLogout?.();
+    try { await axios.post(`${BASE_URL}/api/auth/logout`, {}, { withCredentials: true }); } finally { navigate("/"); }
   }
-
+  const roleLabel = role ? role.replace(/([A-Z])/g, " $1").replace(/^./, (c) => c.toUpperCase()) : "Employee";
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#232C36] transition-colors hover:border-[#4C9FFE]/50 hover:bg-[#10161D]"
-      >
-        <span className="w-6 h-6 rounded-full bg-[#171F27] border border-[#232C36] flex items-center justify-center text-[11px] text-[#ECF1F5] font-medium">
-          {userName.charAt(0)}
-        </span>
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#232C36] hover:border-[#4C9FFE]/50 hover:bg-[#10161D] transition-colors">
+        <span className="w-6 h-6 rounded-full bg-[#171F27] border border-[#232C36] flex items-center justify-center text-[11px] text-[#ECF1F5] font-medium">{userName.charAt(0).toUpperCase()}</span>
         <span className="text-xs text-[#8C99A6]">{userName}</span>
         <ChevronDown size={13} className={`text-[#8C99A6] transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-
       {open && (
         <div className="menu-in absolute right-0 mt-2 w-44 rounded-lg border border-[#232C36] bg-[#10161D] shadow-lg shadow-black/40 overflow-hidden z-10">
           <div className="px-3.5 py-2.5 border-b border-[#232C36]">
             <p className="text-sm text-[#ECF1F5] font-medium truncate">{userName}</p>
-            <p className="text-xs text-[#8C99A6] mt-0.5">Asset Manager</p>
+            <p className="text-xs text-[#8C99A6] mt-0.5">{roleLabel}</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-[#F0555F] hover:bg-[#F0555F]/[0.08] transition-colors"
-          >
-            <LogOut size={14} />
-            Log out
-          </button>
+          <button onClick={logout} className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-[#F0555F] hover:bg-[#F0555F]/8 transition-colors">Log out</button>
         </div>
       )}
     </div>
