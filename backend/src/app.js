@@ -25,6 +25,7 @@ const transferRouter = require('./routes/transferRoutes');
 const allocationRouter = require('./routes/allocationRoutes');
 const bookingRouter = require('./routes/bookingRoutes');
 const maintenanceRouter = require('./routes/maintenanceRoutes');
+const auditRouter = require('./routes/auditRoutes');
 
 app.use("/api/auth",authRouter)
 app.use('/api/departments', departmentRoutes);
@@ -34,6 +35,7 @@ app.use('/api/allocations', allocationRouter);
 app.use('/api/transfers', transferRouter);
 app.use('/api/bookings', bookingRouter);
 app.use('/api/maintenance', maintenanceRouter);
+app.use('/api/audits', auditRouter);
 
 connectDB()
     .then(()=>{
