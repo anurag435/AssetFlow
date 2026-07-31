@@ -132,9 +132,9 @@ export default function AllocationPage() {
   return (
     <div className="min-h-screen w-full bg-[#0A0E13] font-['Inter'] flex fade-in">
       <Sidebar />
-      <div className="flex-1 min-w-0 p-8 max-w-[560px]">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Allocation &amp; Transfer</h1>
+      <div className="flex-1 min-w-0 w-full p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8 max-w-[560px]">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Allocation &amp; Transfer</h1>
           <ProfileMenu userName={user?.name || "..."} role={user?.role} />
         </div>
 
@@ -180,7 +180,7 @@ export default function AllocationPage() {
             {!isTaken && asset.status === "Available" && (
               <form onSubmit={handleAllocate} className="mt-6">
                 <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base">Allocate this asset</h2>
-                <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                   <label className="block">
                     <span className="text-xs text-[#8C99A6] mb-1.5 block">Assign to</span>
                     <select value={holderUser} onChange={(e) => setHolderUser(e.target.value)} className="w-full h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] text-[#ECF1F5] text-sm outline-none focus:border-[#29D8AA]/50">
@@ -203,7 +203,7 @@ export default function AllocationPage() {
               <form onSubmit={handleTransferRequest} className="mt-6">
                 <h2 className="text-[#ECF1F5] font-['Space_Grotesk'] font-medium text-base">Transfer Request</h2>
                 <p className="text-xs text-[#8C99A6] mt-1">Requested by you ({user?.name}) — approval routes to the receiving department's head.</p>
-                <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
                   <label className="block">
                     <span className="text-xs text-[#8C99A6] mb-1.5 block">Currently held by</span>
                     <div className="h-11 px-3 rounded-lg bg-[#10161D] border border-[#232C36] flex items-center text-sm text-[#8C99A6]">

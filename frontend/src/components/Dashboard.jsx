@@ -64,13 +64,13 @@ export default function DashPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
 
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Today's Overview</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Today's Overview</h1>
             <ProfileMenu userName={user?.name || "..."} role={user?.role} onLogout={handleLogout} />
           </div>
 
@@ -86,7 +86,7 @@ export default function DashPage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-3 gap-3.5 mt-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-5">
                 {kpis.map((kpi, i) => (
                   <KpiCard key={kpi.label} label={kpi.label} value={kpi.value} delay={i * 40} />
                 ))}
@@ -103,7 +103,7 @@ export default function DashPage() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mt-4 fade-up" style={{ animationDelay: "310ms" }}>
+              <div className="flex items-center flex-wrap gap-3 mt-4 fade-up" style={{ animationDelay: "310ms" }}>
                 <ActionButton label="+ register asset" primary onClick={() => goTo("/assets")} />
                 <ActionButton label="Book resource" onClick={() => goTo("/resource-booking")} />
                 <ActionButton label="Raise requests" onClick={() => goTo("/maintenance")} />

@@ -142,9 +142,9 @@ export default function ResourceBookingPage() {
   return (
     <div className="min-h-screen w-full bg-[#0A0E13] font-['Inter'] flex fade-in">
       <Sidebar />
-      <div className="flex-1 min-w-0 p-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Resource Booking</h1>
+      <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Resource Booking</h1>
           <ProfileMenu userName={user?.name || "..."} role={user?.role} />
         </div>
 
@@ -154,7 +154,7 @@ export default function ResourceBookingPage() {
           <p className="mt-6 text-sm text-[#8C99A6]">No bookable resources found. Mark an asset as bookable in Assets to see it here.</p>
         ) : (
           <>
-            <div className="flex gap-3 mt-6 max-w-3xl">
+            <div className="flex flex-col sm:flex-row gap-3 mt-6 max-w-3xl">
               <div className="flex-1">
                 <span className="text-xs text-[#8C99A6] mb-1.5 block">Resource</span>
                 <div className="relative">
@@ -170,11 +170,11 @@ export default function ResourceBookingPage() {
               </div>
             </div>
 
-            <div className="mt-5 max-w-3xl rounded-lg border border-[#232C36] overflow-hidden relative">
+            <div className="mt-5 max-w-3xl rounded-lg border border-[#232C36] overflow-x-auto relative">
               {bookingsLoading && (
                 <div className="absolute inset-0 bg-[#0A0E13]/60 flex items-center justify-center z-10"><Loader2 size={18} className="animate-spin text-[#8C99A6]" /></div>
               )}
-              <div className="relative bg-[#10161D]" style={{ height: (endHour - startHour) * rowHeight }}>
+              <div className="relative bg-[#10161D] min-w-[480px]" style={{ height: (endHour - startHour) * rowHeight }}>
                 {hours.map((h, i) => (
                   <div key={h} className="absolute left-0 right-0 border-t border-[#232C36]" style={{ top: i * rowHeight }}>
                     <span className="inline-block w-16 -translate-y-2 text-xs text-[#8C99A6] font-['JetBrains_Mono'] pl-3">{formatHour(h)}</span>
@@ -211,7 +211,7 @@ export default function ResourceBookingPage() {
                   <p className="text-sm font-medium text-[#ECF1F5]">New booking</p>
                   <button type="button" onClick={() => setFormOpen(false)} className="text-[#8C99A6] hover:text-[#ECF1F5]"><X size={16} /></button>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <TimeField label="Start" value={form.start} onChange={(v) => updateForm("start", v)} />
                   <TimeField label="End" value={form.end} onChange={(v) => updateForm("end", v)} />
                   <div>

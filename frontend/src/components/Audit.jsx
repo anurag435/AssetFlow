@@ -97,12 +97,12 @@ export default function AuditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Asset Audit</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Asset Audit</h1>
             <div className="flex items-center gap-3">
               <button onClick={() => setFormOpen((v) => !v)} className="flex items-center gap-1.5 h-9 px-4 rounded-md text-sm border border-[#29D8AA]/60 text-[#29D8AA] hover:bg-[#29D8AA]/8 transition-all active:scale-[0.97]">
                 {formOpen ? <X size={14} /> : <Plus size={14} />} New cycle
@@ -145,7 +145,7 @@ export default function AuditPage() {
               {itemsLoading ? (
                 <div className="mt-5 flex items-center gap-2 text-sm text-[#8C99A6]"><Loader2 size={14} className="animate-spin" /> Loading items...</div>
               ) : (
-                <div className="mt-5 rounded-lg border border-[#232C36] overflow-hidden">
+                <div className="mt-5 rounded-lg border border-[#232C36] overflow-hidden overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-[#232C36] bg-[#10161D]">
@@ -228,8 +228,8 @@ function NewCycleForm({ onCreated, onCancel }) {
   return (
     <form onSubmit={submit} className="panel-in mt-4 rounded-lg border border-[#232C36] bg-[#10161D] p-5 max-w-xl">
       <p className="text-sm font-medium text-[#ECF1F5] mb-3">New audit cycle</p>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="block col-span-1 sm:col-span-2">
           <span className="text-xs text-[#8C99A6] mb-1.5 block">Name</span>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Q3 audit: Engineering dept" className="w-full h-9 px-3 rounded-md bg-[#0A0E13] border border-[#3A4551] text-sm text-[#ECF1F5] outline-none focus:border-[#4C9FFE]/60" />
         </label>
@@ -241,7 +241,7 @@ function NewCycleForm({ onCreated, onCancel }) {
           <span className="text-xs text-[#8C99A6] mb-1.5 block">End date</span>
           <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full h-9 px-3 rounded-md bg-[#0A0E13] border border-[#3A4551] text-sm text-[#ECF1F5] outline-none focus:border-[#4C9FFE]/60" />
         </label>
-        <label className="block col-span-2">
+        <label className="block col-span-1 sm:col-span-2">
           <span className="text-xs text-[#8C99A6] mb-1.5 block">Location scope (optional)</span>
           <input value={scopeLocation} onChange={(e) => setScopeLocation(e.target.value)} placeholder="e.g. HQ floor 2" className="w-full h-9 px-3 rounded-md bg-[#0A0E13] border border-[#3A4551] text-sm text-[#ECF1F5] outline-none focus:border-[#4C9FFE]/60" />
         </label>

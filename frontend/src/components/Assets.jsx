@@ -110,13 +110,13 @@ export default function AssetsPage() {
   }, [category, status, department]);
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
 
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Assets</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Assets</h1>
             <ProfileMenu userName={user?.name || "..."} role={user?.role} />
           </div>
 
@@ -126,7 +126,7 @@ export default function AssetsPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-3 mt-5 fade-up" style={{ animationDelay: "40ms" }}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-5 fade-up" style={{ animationDelay: "40ms" }}>
             <div className="flex-1 flex items-center gap-2.5 h-10 px-3.5 rounded-lg bg-[#10161D] border border-[#232C36] focus-within:border-[#29D8AA]/50 transition-colors">
               <Search size={15} className="text-[#8C99A6] shrink-0" />
               <input
@@ -146,7 +146,7 @@ export default function AssetsPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2.5 mt-3 fade-up" style={{ animationDelay: "80ms" }}>
+          <div className="flex items-center gap-2.5 mt-3 fade-up flex-wrap" style={{ animationDelay: "80ms" }}>
             <FilterDropdown
               label="Category"
               value={category}
@@ -183,6 +183,7 @@ export default function AssetsPage() {
           )}
 
           <div className="mt-4 rounded-lg border border-[#232C36] overflow-hidden fade-up" style={{ animationDelay: "120ms" }}>
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#232C36] bg-[#10161D]">
@@ -223,6 +224,7 @@ export default function AssetsPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>
@@ -302,7 +304,7 @@ function RegisterAssetForm({ categories, departments, onCreated, onCancel }) {
     >
       <p className="text-sm font-medium text-[#ECF1F5] mb-3">Register new asset</p>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <Field label="Name *">
           <input className={inputClass} value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="e.g. Dell Laptop" />
         </Field>

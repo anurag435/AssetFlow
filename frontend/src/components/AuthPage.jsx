@@ -134,7 +134,7 @@ export default function AuthPage({ onLogin, onSignup }) {
 
       <BrandPanel />
 
-      <div className="flex-1 flex items-center justify-center px-6 py-12">
+      <div className="flex-1 flex items-center justify-center px-5 py-10 sm:px-6 sm:py-12">
         <div className="w-full max-w-md fade-up">
           <div className="lg:hidden flex items-center gap-2 mb-10 justify-center">
             <LogoMark size="sm" />

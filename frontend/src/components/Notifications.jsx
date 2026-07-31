@@ -67,18 +67,18 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Activity logs &amp; Notifications</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Activity logs &amp; Notifications</h1>
             <ProfileMenu userName={user?.name || "..."} role={user?.role} />
           </div>
 
           {error && <div className="mt-4 rounded-lg border border-[#F0555F]/50 bg-[#F0555F]/6 px-4 py-2.5 text-sm text-[#F0555F]">{error}</div>}
 
-          <div className="flex items-center gap-2.5 mt-5">
+          <div className="flex items-center gap-2.5 mt-5 flex-wrap">
             {filters.map((f) => <FilterTab key={f} label={f} active={f === filter} onClick={() => setFilter(f)} />)}
           </div>
 

@@ -94,9 +94,9 @@ export default function MaintenancePage() {
   return (
     <div className="min-h-screen w-full bg-[#0A0E13] font-['Inter'] flex fade-in">
       <Sidebar />
-      <div className="flex-1 min-w-0 p-8 flex flex-col">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Maintenance</h1>
+      <div className="flex-1 min-w-0 w-full p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8 flex flex-col">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Maintenance</h1>
           <div className="flex items-center gap-3">
             <button onClick={() => setFormOpen((v) => !v)} className="flex items-center gap-1.5 h-9 px-4 rounded-md text-sm border border-[#29D8AA]/60 text-[#29D8AA] hover:bg-[#29D8AA]/8 transition-all active:scale-[0.97]">
               {formOpen ? <X size={14} /> : <Plus size={14} />} Raise request
@@ -118,7 +118,7 @@ export default function MaintenancePage() {
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-[#8C99A6] text-sm gap-2"><Loader2 size={16} className="animate-spin" /> Loading...</div>
         ) : (
-          <div className="mt-6 flex-1 grid grid-cols-5 gap-4">
+          <div className="mt-6 flex-1 flex gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-5 md:overflow-visible md:pb-0">
             {stages.map((stage) => (
               <Column
                 key={stage}
@@ -173,7 +173,7 @@ function RaiseRequestForm({ assets, onCreated, onCancel }) {
   return (
     <form onSubmit={submit} className="panel-in mt-4 rounded-lg border border-[#232C36] bg-[#10161D] p-5 max-w-xl">
       <p className="text-sm font-medium text-[#ECF1F5] mb-3">Raise maintenance request</p>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
           <span className="text-xs text-[#8C99A6] mb-1.5 block">Asset</span>
           <select value={assetId} onChange={(e) => setAssetId(e.target.value)} className="w-full h-9 px-3 rounded-md bg-[#0A0E13] border border-[#3A4551] text-sm text-[#ECF1F5] outline-none focus:border-[#4C9FFE]/60">
@@ -206,7 +206,7 @@ function RaiseRequestForm({ assets, onCreated, onCancel }) {
 function Column({ stage, cards, onAdvance, onReject, busyId }) {
   const isResolved = stage === "Resolved";
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col shrink-0 w-[78vw] sm:w-64 md:w-auto">
       <div className="flex items-center justify-between px-1 pb-3 border-b border-[#232C36]">
         <span className="text-sm text-[#8C99A6]">{stage}</span>
         <span className="text-xs text-[#4A5460] font-['JetBrains_Mono']">{cards.length}</span>

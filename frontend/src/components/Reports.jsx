@@ -48,12 +48,12 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Reports &amp; Analytics</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Reports &amp; Analytics</h1>
             <ProfileMenu userName={user?.name || "..."} role={user?.role} />
           </div>
 
@@ -63,7 +63,7 @@ export default function ReportsPage() {
             <div className="flex items-center justify-center gap-2 text-[#8C99A6] text-sm py-20"><Loader2 size={16} className="animate-spin" /> Loading...</div>
           ) : summary && (
             <>
-              <div className="grid grid-cols-2 gap-4 mt-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
                 <ChartCard title="Utilization by department">
                   {summary.utilizationByDept.length ? <BarChart data={summary.utilizationByDept} /> : <EmptyNote text="No department-assigned assets yet." />}
                 </ChartCard>
@@ -72,7 +72,7 @@ export default function ReportsPage() {
                 </ChartCard>
               </div>
 
-              <div className="grid grid-cols-2 gap-8 mt-7">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-7">
                 <ListSection title="Most used assets" items={summary.mostUsedAssets.map((a) => `${a.label} · ${a.uses} uses`)} />
                 <ListSection title="Idle assets" items={summary.idleAssets.map((a) => `${a.label} · unused ${a.idleDays} days`)} />
               </div>

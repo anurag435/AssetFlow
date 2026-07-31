@@ -78,13 +78,13 @@ export default function OrgSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-6">
-      <div className="w-full rounded-2xl border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
+    <div className="min-h-screen bg-[#060a10] font-['Inter'] flex items-center justify-center p-0 sm:p-6">
+      <div className="w-full sm:rounded-2xl border-0 sm:border border-[#232C36] bg-[#0A0E13] overflow-hidden flex fade-in">
         <Sidebar />
 
-        <div className="flex-1 min-w-0 p-8">
-          <div className="flex items-center justify-between">
-            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-xl">Organization setup</h1>
+        <div className="flex-1 min-w-0 p-4 pt-20 sm:p-8 sm:pt-20 md:pt-8">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <h1 className="text-[#ECF1F5] font-['Space_Grotesk'] font-semibold text-lg sm:text-xl">Organization setup</h1>
             <ProfileMenu userName={user?.name || "..."} role={user?.role} onLogout={handleLogout} />
           </div>
 
@@ -94,7 +94,7 @@ export default function OrgSetupPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2.5 mt-5 fade-up" style={{ animationDelay: "40ms" }}>
+          <div className="flex items-center gap-2.5 mt-5 fade-up flex-wrap" style={{ animationDelay: "40ms" }}>
             {tabs.map((tab) => (
               <TabButton key={tab} label={tab} active={tab === activeTab} onClick={() => switchTab(tab)} />
             ))}
@@ -256,7 +256,7 @@ function StatusBadge({ status }) {
 function TableShell({ head, rows, addRow, emptyLabel }) {
   const isEmpty = rows.length === 0 && !addRow;
   return (
-    <div className="rounded-lg border border-[#232C36] overflow-hidden">
+    <div className="rounded-lg border border-[#232C36] overflow-hidden overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[#232C36] bg-[#10161D]">
